@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Stream Player – Tunable FX (Noise + 5×LPF + BP + Reverb)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body{font-family:sans-serif;max-width:720px;margin:1em auto}
+    input[type=range]{width:60%}
+    label span{font-weight:bold}
+    fieldset{border:1px solid #aaa;border-radius:6px;padding:.5em 1em;margin-bottom:1em}
+    legend{font-size:1.1em;font-weight:bold;padding:0 .3em}
+    .toggle{margin-left:1em;font-size:.95em}
+  </style>
+</head>
+<body>
+<h1>Stream Player – Tunable FX</h1>
+
+<p>
+  Stream URL:<br>
+  <input id="urlInput" type="text" value="http://playerservices.streamtheworld.com/pls/WUOMFM.pls" style="width:100%">
+  <button id="playBtn">Play / Resume</button>
+</p>
+
+<!-- ================ FILTERS ================ -->
+<fieldset>
+ <legend>Filters</legend>
+ <p class="toggle">
+   <label><input type="checkbox" id="hpfToggle" checked> High-pass</label>
+   &nbsp;|&nbsp;
+   <label><input type="checkbox" id="lpfToggle" checked> Low-pass 1</label>
+   &nbsp;|&nbsp;
+   <label><input type="checkbox" id="lpf2Toggle" checked> Low-pass 2</label>
+   &nbsp;|&nbsp;
+   <label><input type="checkbox" id="lpf3Toggle" checked> Low-pass 3</label>
+   &nbsp;|&nbsp;
+   <label><input type="checkbox" id="lpf4Toggle" checked> Low-pass 4</label>
+   &nbsp;|&nbsp;
+   <label><input type="checkbox" id="lpf5Toggle" checked> Low-pass 5</label>
+   &nbsp;|&nbsp;
+   <label><input type="checkbox" id="bpToggle"> Band-pass</label>
+ </p>
+
+ <p>
+   <label>High-pass cut-off:
+     <input id="hpfSlider" type="range" min="20" max="5000" step="10" value="250">
+     <span id="hpfVal">250 Hz</span>
+   </label><br><small>Higher = thinner/tinnier.</small>
+ </p>
+ <p>
+   <label>Low-pass 1 cut-off:
+     <input id="lpfSlider" type="range" min="5" max="2000" step="1" value="2000">
+     <span id="lpfVal">2.0 kHz</span>
+   </label>
+ </p>
+ <p>
+   <label>Low-pass 2 cut-off:
+     <input id="lpf2Slider" type="range" min="5" max="2000" step="1" value="8000">
+     <span id="lpf2Val">8.0 kHz</span>
+   </label>
+ </p>
+ <p>
+   <label>Low-pass 3 cut-off:
+     <input id="lpf3Slider" type="range" min="5" max="2000" step="1" value="12000">
+     <span id="lpf3Val">12.0 kHz</span>
+   </label>
+ </p>
+ <p>
+   <label>Low-pass 4 cut-off:
+     <input id="lpf4Slider" type="range" min="5" max="2000" step="1" value="15000">
+     <span id="lpf4Val">15.0 kHz</span>
+   </label>
+ </p>
+ <p>
+   <label>Low-pass 5 cut-off:
+     <input id="lpf5Slider" type="range" min="5" max="2000" step="1" value="20000">
+     <span id="lpf5Val">20.0 kHz</span>
+   </label>
+ </p>
+ <p>
+   <label>Band-pass center:
+     <input id="bpFreqSlider" type="range" min="20" max="10000" step="10" value="1000">
+     <span id="bpFreqVal">1.0 kHz</span>
+   </label>
+   &nbsp;&nbsp;
+   <label>Q:
+     <input id="bpQSlider" type="range" min="0.1" max="20" step="0.1" value="1">
+     <span id="bpQVal">1.0</span>
+   </label>
+ </p>
+</fieldset>
+
+<!-- ================ DISTORTION ================ -->
+<fieldset>
+ <legend>Distortion</legend>
+ <p class="toggle"><label><input type="checkbox" id="distToggle" checked> Enable Distortion</label></p>
+ <p>
+   <label>Wet mix:
+     <input id="distMixSlider" type="range" min="0" max="100" value="50">
+     <span id="distMixVal">50 %</span>
+   </label>
+ </p>
+ <p>
+   <label>Intensity <code>k</code>:
+     <input id="distIntSlider" type="range" min="0" max="1000" value="500">
+     <span id="distIntVal">500</span>
+   </label>
+ </p>
+</fieldset>
+
+<!-- ================ REVERB ================ -->
+<fieldset>
+ <legend>Reverb</legend>
+ <p class="toggle"><label><input type="checkbox" id="revToggle"> Enable Reverb</label></p>
+ <p>
+   <label>Wet mix:
+     <input id="revMixSlider" type="range" min="0" max="100" value="30">
+     <span id="revMixVal">30 %</span>
+   </label>
+ </p>
+ <p>
+   <label>Decay:
+     <input id="revDecaySlider" type="range" min="0.1" max="10" step="0.1" value="2">
+     <span id="revDecayVal">2.0 s</span>
+   </label>
+ </p>
+</fieldset>
+
+<!-- ================ PITCH ================ -->
+<fieldset>
+ <legend>Pitch / Tempo</legend>
+ <p class="toggle"><label><input type="checkbox" id="pitchToggle" checked> Enable Pitch / Tempo</label></p>
+ <p>
+   <label>Pitch factor (0.5–2):
+     <input id="pitchSlider" type="range" min="0.5" max="2" step="0.01" value="1">
+     <span id="pitchVal">1.00 ×</span>
+   </label><br><small>Changes both pitch and tempo via <code>playbackRate</code>.</small>
+ </p>
+</fieldset>
+
+<!-- ================ NOISE ================ -->
+<fieldset>
+ <legend>Noise Generators</legend>
+ <p class="toggle"><label><input type="checkbox" id="noiseToggle"> Enable Noise</label></p>
+ <p>
+   Types:
+   <label><input type="checkbox" id="whiteCb" checked> White</label>
+   <label style="margin-left:1em"><input type="checkbox" id="pinkCb"> Pink</label>
+ </p>
+ <p>
+   <label>Noise volume:
+     <input id="noiseVolSlider" type="range" min="0" max="100" value="0">
+     <span id="noiseVolVal">0 %</span>
+   </label>
+ </p>
+ <p>
+   <label>Noise pitch (0.25–2):
+     <input id="noisePitchSlider" type="range" min="0.25" max="2" step="0.01" value="1">
+     <span id="noisePitchVal">1.00 ×</span>
+   </label>
+ </p>
+</fieldset>
+
+<script>
+console.log("Enhanced Stream Player v4 – dual noise, 5×LPF, BP & Reverb");
+
+// ---------- Web-Audio graph ----------
+const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+const audioElem = new Audio();
+audioElem.crossOrigin = "anonymous";
+audioElem.preservesPitch = audioElem.mozPreservesPitch = audioElem.webkitPreservesPitch = false;
+
+const srcNode = audioCtx.createMediaElementSource(audioElem);
+
+// Filters
+const hpFilter   = buildFilter("highpass", 250);
+const lpFilter   = buildFilter("lowpass", 2000);
+const lpFilter2  = buildFilter("lowpass", 8000);
+const lpFilter3  = buildFilter("lowpass", 12000);
+const lpFilter4  = buildFilter("lowpass", 15000);
+const lpFilter5  = buildFilter("lowpass", 20000);
+const bpFilter   = buildFilter("bandpass", 1000, 1);
+
+function buildFilter(type, freq, q=1){
+  const f = audioCtx.createBiquadFilter();
+  f.type = type;
+  f.frequency.value = freq;
+  f.Q.value = q;
+  return f;
+}
+
+// Distortion
+const distortion = audioCtx.createWaveShaper();
+distortion.oversample = "4x";
+function makeCurve(k){
+  const n = 44100, curve = new Float32Array(n), deg = Math.PI/180;
+  for(let i=0;i<n;i++){
+    const x = i*2/n-1;
+    curve[i] = ((3+k)*x*20*deg)/(Math.PI+k*Math.abs(x));
+  }
+  return curve;
+}
+let distK = 500; distortion.curve = makeCurve(distK);
+
+// Reverb (Convolver)
+const convolver = audioCtx.createConvolver();
+const revGain   = audioCtx.createGain();
+let revMix = 0.3; revGain.gain.value = 0;
+let revDecay = 2;
+convolver.buffer = createImpulseBuffer(3, revDecay);
+
+function createImpulseBuffer(duration, decay){
+  const rate = audioCtx.sampleRate;
+  const len  = rate * duration;
+  const buf  = audioCtx.createBuffer(2, len, rate);
+  for(let ch=0; ch<2; ch++){
+    const data = buf.getChannelData(ch);
+    for(let i=0; i<len; i++){
+      data[i] = (Math.random()*2-1) * Math.pow(1 - i/len, decay);
+    }
+  }
+  return buf;
+}
+
+function updateReverbBuffer(){
+  convolver.buffer = createImpulseBuffer(3, revDecay);
+}
+
+// Gains
+const dryGain = audioCtx.createGain();
+const wetGain = audioCtx.createGain();
+let distMix = 0.5; dryGain.gain.value = 1 - distMix; wetGain.gain.value = distMix;
+
+// Noise pipeline (white & pink simultaneously)
+let whiteSrc = null; let pinkSrc = null;
+const noiseGain = audioCtx.createGain(); noiseGain.gain.value = 0;
+noiseGain.connect(hpFilter); // inject right at the beginning
+
+function createNoiseBuffer(type){
+  const len = audioCtx.sampleRate * 2;
+  const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+  const data = buf.getChannelData(0);
+  if(type === "white"){
+    for(let i=0;i<len;i++) data[i] = Math.random()*2 - 1;
+  }else{
+    let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+    for(let i=0;i<len;i++){
+      const white = Math.random()*2 - 1;
+      b0 = 0.99886*b0 + white*0.0555179;
+      b1 = 0.99332*b1 + white*0.0750759;
+      b2 = 0.96900*b2 + white*0.1538520;
+      b3 = 0.86650*b3 + white*0.3104856;
+      b4 = 0.55000*b4 + white*0.5329522;
+      b5 = -0.7616*b5 - white*0.0168980;
+      data[i] = (b0+b1+b2+b3+b4+b5+b6+white*0.5362)*0.11;
+      b6 = white*0.115926;
+    }
+  }
+  return buf;
+}
+
+function startNoise(type){
+  const src = audioCtx.createBufferSource();
+  src.buffer = createNoiseBuffer(type);
+  src.loop = true;
+  src.playbackRate.value = parseFloat($("noisePitchSlider").value);
+  src.connect(noiseGain);
+  src.start();
+  return src;
+}
+
+function stopSrc(src){ if(src) try{src.stop();}catch(e){} }
+
+// ---------- Routing ----------
+// src → HPF → LPF1 → LPF2 → LPF3 → LPF4 → LPF5 → BP → dry / distortion / convolver
+srcNode.connect(hpFilter);
+hpFilter.connect(lpFilter);
+lpFilter.connect(lpFilter2);
+lpFilter2.connect(lpFilter3);
+lpFilter3.connect(lpFilter4);
+lpFilter4.connect(lpFilter5);
+lpFilter5.connect(bpFilter);
+
+bpFilter.connect(dryGain);
+bpFilter.connect(distortion);
+
+// Send both dry & distorted feeds into reverb
+bpFilter.connect(convolver);
+wetGain.connect(convolver);
+
+// Distortion path
+const distOutput = distortion;
+distOutput.connect(wetGain);
+
+dryGain.connect(audioCtx.destination);
+wetGain.connect(audioCtx.destination);
+convolver.connect(revGain);
+revGain.connect(audioCtx.destination);
+
+// ========== UTIL ==========
+function $(id){return document.getElementById(id);} // shorthand
+function setSliderEnabled(sl,en){ sl.disabled=!en; sl.style.opacity=en?"1":".4"; }
+
+// ========== FILTER UI ==========
+const hpfToggle=$("hpfToggle"), hpfSlider=$("hpfSlider"), hpfVal=$("hpfVal");
+const lpfToggle=$("lpfToggle"), lpfSlider=$("lpfSlider"), lpfVal=$("lpfVal");
+const lpf2Toggle=$("lpf2Toggle"), lpf2Slider=$("lpf2Slider"), lpf2Val=$("lpf2Val");
+const lpf3Toggle=$("lpf3Toggle"), lpf3Slider=$("lpf3Slider"), lpf3Val=$("lpf3Val");
+const lpf4Toggle=$("lpf4Toggle"), lpf4Slider=$("lpf4Slider"), lpf4Val=$("lpf4Val");
+const lpf5Toggle=$("lpf5Toggle"), lpf5Slider=$("lpf5Slider"), lpf5Val=$("lpf5Val");
+const bpToggle=$("bpToggle"), bpFreqSlider=$("bpFreqSlider"), bpFreqVal=$("bpFreqVal"), bpQSlider=$("bpQSlider"), bpQVal=$("bpQVal");
+
+hpfToggle.onchange = ()=>{ hpFilter.type=hpfToggle.checked?"highpass":"allpass"; setSliderEnabled(hpfSlider,hpfToggle.checked);} ;
+[lpfToggle,lpf2Toggle,lpf3Toggle,lpf4Toggle,lpf5Toggle].forEach((tg,i)=>{
+  const slider=[lpfSlider,lpf2Slider,lpf3Slider,lpf4Slider,lpf5Slider][i];
+  const filt=[lpFilter,lpFilter2,lpFilter3,lpFilter4,lpFilter5][i];
+  tg.onchange=()=>{ filt.type=tg.checked?"lowpass":"allpass"; setSliderEnabled(slider,tg.checked);} ;
+});
+
+hpfSlider.oninput=e=>{const v=+e.target.value; hpFilter.frequency.value=v; hpfVal.textContent=v+" Hz"; };
+[lpfSlider,lpf2Slider,lpf3Slider,lpf4Slider,lpf5Slider].forEach((sl,i)=>{
+  sl.oninput=e=>{ const v=+e.target.value; [lpFilter,lpFilter2,lpFilter3,lpFilter4,lpFilter5][i].frequency.value=v; [lpfVal,lpf2Val,lpf3Val,lpf4Val,lpf5Val][i].textContent=(v/1000).toFixed(1)+" kHz"; };
+});
+
+bpToggle.onchange=()=>{ bpFilter.type=bpToggle.checked?"bandpass":"allpass"; setSliderEnabled(bpFreqSlider,bpToggle.checked); setSliderEnabled(bpQSlider,bpToggle.checked); };
+
+bpFreqSlider.oninput=e=>{const v=+e.target.value; bpFilter.frequency.value=v; bpFreqVal.textContent=(v>=1000?(v/1000).toFixed(1)+" kHz":v+" Hz"); };
+bpQSlider.oninput=e=>{const v=parseFloat(e.target.value); bpFilter.Q.value=v; bpQVal.textContent=v.toFixed(1);} ;
+
+// ========== DISTORTION ==========
+const distToggle=$("distToggle"), distMixSlider=$("distMixSlider"), distMixVal=$("distMixVal"), distIntSlider=$("distIntSlider"), distIntVal=$("distIntVal");
+
+distToggle.onchange=()=>{ dryGain.gain.value=distToggle.checked?1-distMix:1; wetGain.gain.value=distToggle.checked?distMix:0; setSliderEnabled(distMixSlider,distToggle.checked); setSliderEnabled(distIntSlider,distToggle.checked);} ;
+
+distMixSlider.oninput=e=>{distMix=+e.target.value/100; distMixVal.textContent=Math.round(distMix*100)+" %"; if(distToggle.checked){dryGain.gain.value=1-distMix; wetGain.gain.value=distMix;} };
+
+distIntSlider.oninput=e=>{distK=+e.target.value; distortion.curve=makeCurve(distK); distIntVal.textContent=distK; };
+
+// ========== REVERB ==========
+const revToggle=$("revToggle"), revMixSlider=$("revMixSlider"), revMixVal=$("revMixVal"), revDecaySlider=$("revDecaySlider"), revDecayVal=$("revDecayVal");
+
+revToggle.onchange=()=>{ revGain.gain.value=revToggle.checked?revMix:0; setSliderEnabled(revMixSlider,revToggle.checked); setSliderEnabled(revDecaySlider,revToggle.checked);} ;
+
+revMixSlider.oninput=e=>{ revMix=+e.target.value/100; revMixVal.textContent=Math.round(revMix*100)+" %"; if(revToggle.checked) revGain.gain.value=revMix; };
+
+revDecaySlider.oninput=e=>{ revDecay=+e.target.value; revDecayVal.textContent=revDecay.toFixed(1)+" s"; updateReverbBuffer(); };
+
+// ========== PITCH ==========
+const pitchToggle=$("pitchToggle"), pitchSlider=$("pitchSlider"), pitchVal=$("pitchVal"); let pitchFactor=1;
+
+pitchToggle.onchange=()=>{ audioElem.playbackRate=pitchToggle.checked?pitchFactor:1; setSliderEnabled(pitchSlider,pitchToggle.checked);} ;
+pitchSlider.oninput=e=>{pitchFactor=parseFloat(e.target.value); pitchVal.textContent=pitchFactor.toFixed(2)+" ×"; if(pitchToggle.checked) audioElem.playbackRate=pitchFactor; };
+
+// ========== NOISE ==========
+const noiseToggle=$("noiseToggle"), noiseVolSlider=$("noiseVolSlider"), noiseVolVal=$("noiseVolVal");
+const noisePitchSlider=$("noisePitchSlider"), noisePitchVal=$("noisePitchVal");
+const whiteCb=$("whiteCb"), pinkCb=$("pinkCb");
+
+function updateNoiseState(){
+  const enabled=noiseToggle.checked;
+  setSliderEnabled(noiseVolSlider,enabled);
+  setSliderEnabled(noisePitchSlider,enabled);
+  whiteCb.disabled= pinkCb.disabled = !enabled;
+  if(!enabled){ stopSrc(whiteSrc); stopSrc(pinkSrc); whiteSrc=pinkSrc=null; noiseGain.gain.value=0; return; }
+  if(whiteCb.checked && !whiteSrc){ whiteSrc=startNoise("white"); }
+  if(!whiteCb.checked){ stopSrc(whiteSrc); whiteSrc=null; }
+  if(pinkCb.checked && !pinkSrc){ pinkSrc=startNoise("pink"); }
+  if(!pinkCb.checked){ stopSrc(pinkSrc); pinkSrc=null; }
+  noiseGain.gain.value=parseFloat(noiseVolSlider.value)/100;
+}
+
+noiseToggle.onchange=updateNoiseState;
+whiteCb.onchange=updateNoiseState;
+pinkCb.onchange=updateNoiseState;
+
+noiseVolSlider.oninput=e=>{ const v=parseFloat(e.target.value)/100; noiseVolVal.textContent=Math.round(v*100)+" %"; if(noiseToggle.checked) noiseGain.gain.value=v; };
+
+noisePitchSlider.oninput=e=>{ const v=parseFloat(e.target.value); noisePitchVal.textContent=v.toFixed(2)+" ×"; if(whiteSrc) whiteSrc.playbackRate.value=v; if(pinkSrc) pinkSrc.playbackRate.value=v; };
+
+// ========== .pls RESOLVER ==========
+async function resolveStream(url){
+  if(!url.endsWith(".pls")) return url;
+  try{ const txt=await fetch(url).then(r=>r.text()); const m=txt.match(/File1=(.*)/); if(m) return m[1].trim(); }catch(err){ console.warn(".pls parse failed",err);}  return url; }
+
+// ========== PLAY ==========
+$("playBtn").onclick=async()=>{
+  const raw=$("urlInput").value.trim(); if(!raw) return;
+  const stream=await resolveStream(raw);
+  audioElem.src=stream;
+  try{ await audioElem.play(); await audioCtx.resume(); }catch(err){ console.error("Playback error",err);} };
+
+// Initial UI state
+setSliderEnabled(noiseVolSlider,false); setSliderEnabled(noisePitchSlider,false); whiteCb.disabled=pinkCb.disabled=true;
+setSliderEnabled(revMixSlider,false); setSliderEnabled(revDecaySlider,false);
+
+/* ───── URL-config helper ───────────────────────────────────────── */
+
+/* 1.  Apply ?params=… to the UI and audio graph */
+function applyConfigFromURL () {
+  const qs = new URLSearchParams(location.search);
+
+  // The stream URL entry is special
+  if (qs.has('stream')) {
+    $('urlInput').value = decodeURIComponent(qs.get('stream'));
+  }
+
+  // Everything else: any <input id="…"> found in the DOM
+  document.querySelectorAll('input[id]').forEach(el => {
+    const key = el.id;
+    if (!qs.has(key)) return;            // nothing stored → leave default
+
+    if (el.type === 'checkbox') {
+      el.checked = qs.get(key) === '1' || qs.get(key) === 'true';
+      el.onchange?.();                   // fire our existing handler
+    } else {                             // range / text / number …
+      el.value = qs.get(key);
+      el.oninput?.({ target: el });      // keep labels & filters in sync
+    }
+  });
+}
+
+/* 2.  Push current UI state back into the address bar               */
+function pushConfigToURL () {
+  const qs = new URLSearchParams();
+
+  // Save current stream
+  qs.set('stream', encodeURIComponent($('urlInput').value.trim()));
+
+  // Save every other control
+  document.querySelectorAll('input[id]').forEach(el => {
+    const key = el.id;
+    if (key === 'urlInput') return;              // already handled
+
+    if (el.type === 'checkbox') {
+      if (el.checked) qs.set(key, '1');          // unchecked = don’t store
+    } else {
+      qs.set(key, el.value);
+    }
+  });
+
+  history.replaceState(null, '', `${location.pathname}?${qs}`);
+}
+
+/* 3.  Keep the URL live while the user tweaks things                */
+function startURLSync () {
+  //   – once at start
+  applyConfigFromURL();
+
+  //   – then on every change / input
+  document.querySelectorAll('input[id]').forEach(el => {
+    el.addEventListener(el.type === 'checkbox' ? 'change' : 'input',
+                        pushConfigToURL, { passive: true });
+  });
+
+  //   – finally, write the defaults to the bar (useful on first load)
+  pushConfigToURL();
+}
+startURLSync();
+/* ────────────────────────────────────────────────────────────────── */
+</script>
+</body>
+</html>
